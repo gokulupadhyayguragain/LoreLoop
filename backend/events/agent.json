@@ -1,0 +1,6 @@
+{
+  "source": "development",
+  "trigger": "DEVELOPMENT_TEST",
+  "id": "local-development-run"
+}
+

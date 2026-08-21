@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+dist/
+.aws-sam/
+.env
+.env.local
+.env.*.local
+coverage/
+*.log
+*.tsbuildinfo
+.DS_Store
+
+# SAM / deployment artifacts
+samconfig.toml
+frontend/.vercel/

@@ -1,0 +1,203 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: LoreLoop - an autonomous fictional worldbuilding agent.
+
+Parameters:
+  WorldName:
+    Type: String
+    Default: Aethra
+  WorldId:
+    Type: String
+    Default: main
+  GenerationSchedule:
+    Type: String
+    Default: rate(3 hours)
+    Description: EventBridge Scheduler expression. Use rate(15 minutes) for development evidence.
+  NovaTextModelId:
+    Type: String
+    Default: amazon.nova-lite-v1:0
+  NovaImageModelId:
+    Type: String
+    Default: amazon.nova-canvas-v1:0
+  EnableImageGeneration:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Architectures: [arm64]
+    MemorySize: 1024
+    Timeout: 180
+    Environment:
+      Variables:
+        WORLD_ID: !Ref WorldId
+        WORLD_NAME: !Ref WorldName
+        LORE_TABLE_NAME: !Ref LoreLoopWorldTable
+        ARTWORK_BUCKET_NAME: !Ref LoreLoopArtworkBucket
+        NOVA_TEXT_MODEL_ID: !Ref NovaTextModelId
+        NOVA_IMAGE_MODEL_ID: !Ref NovaImageModelId
+        GENERATION_SCHEDULE: !Ref GenerationSchedule
+        RECENT_LORE_LIMIT: '20'
+        ENABLE_IMAGE_GENERATION: !Ref EnableImageGeneration
+
+Resources:
+  LoreLoopWorldTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub LoreLoopWorld-${WorldId}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  LoreLoopArtworkBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: AbortIncompleteUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+
+  LoreLoopAgentFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Target: es2022
+        Minify: false
+        Sourcemap: true
+    Properties:
+      CodeUri: .
+      Handler: src/agent/handler.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref LoreLoopWorldTable
+        - S3WritePolicy:
+            BucketName: !Ref LoreLoopArtworkBucket
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
+
+  LoreLoopApiFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Target: es2022
+        Minify: false
+        Sourcemap: true
+    Properties:
+      CodeUri: .
+      Handler: src/api/handler.handler
+      Timeout: 30
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref LoreLoopWorldTable
+      Events:
+        ApiRoot:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+            RestApiId: !Ref LoreLoopApi
+        ApiProxy:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            RestApiId: !Ref LoreLoopApi
+
+  LoreLoopApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub LoreLoopApi-${WorldId}
+      StageName: Prod
+      Cors:
+        AllowOrigin: "'*'"
+        AllowHeaders: "'Content-Type'"
+        AllowMethods: "'GET,OPTIONS'"
+
+  LoreLoopSchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLoreLoopAgent
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt LoreLoopAgentFunction.Arn
+
+  LoreLoopSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: !Sub LoreLoop-Autonomous-${WorldId}
+      Description: Wakes LoreLoop to expand its persistent fictional universe.
+      FlexibleTimeWindow:
+        Mode: 'OFF'
+      ScheduleExpression: !Ref GenerationSchedule
+      State: ENABLED
+      Target:
+        Arn: !GetAtt LoreLoopAgentFunction.Arn
+        RoleArn: !GetAtt LoreLoopSchedulerRole.Arn
+        Input: '{"source":"aws.scheduler","trigger":"AUTONOMOUS_SCHEDULE"}'
+
+Outputs:
+  ApiBaseUrl:
+    Description: LoreLoop public API base URL.
+    Value: !Sub https://${LoreLoopApi}.execute-api.${AWS::Region}.amazonaws.com/Prod
+  TableName:
+    Description: DynamoDB world memory table.
+    Value: !Ref LoreLoopWorldTable
+  ArtworkBucketName:
+    Description: Private S3 bucket containing generated artwork.
+    Value: !Ref LoreLoopArtworkBucket
+  AgentFunctionName:
+    Description: Autonomous LoreLoop Lambda function.
+    Value: !Ref LoreLoopAgentFunction
+  SchedulerName:
+    Description: Enabled EventBridge Scheduler name.
+    Value: !Ref LoreLoopSchedule

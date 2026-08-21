@@ -1,0 +1,7 @@
+import { ArchitectureVisual } from "@/components/ArchitectureVisual";
+import { PageIntro } from "@/components/PageIntro";
+
+export default function ArchitecturePage() {
+  return <><div className="container"><PageIntro eyebrow="System map" title="A small loop with a long memory." copy="LoreLoop keeps the architecture intentionally legible: a scheduler wakes one Lambda, the Lambda reads and expands the canon, and the archive exposes what happened." /></div><section className="section"><div className="container"><ArchitectureVisual /></div></section><section className="section"><div className="container"><div className="eyebrow">The autonomous sequence</div><h2 className="section-title">No prompt required.</h2><div style={{ height: 25 }} /><p className="lede">EventBridge Scheduler invokes the agent without a user request. The agent loads a compact world state and recent lore from DynamoDB, uses Amazon Bedrock Nova to select and write the next entry, checks the result against canon, optionally creates artwork with Nova Canvas, stores the result in S3 and DynamoDB, and leaves structured evidence in CloudWatch. API Gateway gives the read-only Next.js archive a public window into that process.</p></div></section></>;
+}
+
