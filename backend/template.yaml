@@ -128,6 +128,11 @@ Resources:
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref LoreLoopWorldTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+              Resource: !GetAtt LoreLoopWorldTable.Arn
       Events:
         ApiRoot:
           Type: Api
@@ -150,7 +155,7 @@ Resources:
       Cors:
         AllowOrigin: "'*'"
         AllowHeaders: "'Content-Type'"
-        AllowMethods: "'GET,OPTIONS'"
+        AllowMethods: "'GET,OPTIONS,POST'"
 
   LoreLoopSchedulerRole:
     Type: AWS::IAM::Role

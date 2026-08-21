@@ -8,7 +8,7 @@ import {
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { getConfig } from "./config";
-import type { ActivityEntry, AgentRun, LoreEntity, WorldState } from "./types";
+import type { ActivityEntry, AgentRun, LoreEntity, WorldSignal, WorldState } from "./types";
 
 const config = getConfig();
 const client = new DynamoDBClient({ region: config.region });
@@ -42,6 +42,31 @@ export async function getRecentLore(limit = config.recentLoreLimit): Promise<Lor
     Limit: Math.max(1, Math.min(limit, 50)),
   }));
   return (result.Items ?? []).map((item) => item.data as LoreEntity);
+}
+
+export async function getRecentSignals(limit = 8): Promise<WorldSignal[]> {
+  const result = await documentClient.send(new QueryCommand({
+    TableName: config.tableName,
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :signal)",
+    ExpressionAttributeValues: { ":pk": worldPk(), ":signal": "SIGNAL#" },
+    ScanIndexForward: false,
+    Limit: Math.max(1, Math.min(limit, 20)),
+  }));
+  return (result.Items ?? []).map((item) => item.data as WorldSignal);
+}
+
+export async function putSignal(signal: WorldSignal): Promise<void> {
+  await documentClient.send(new PutCommand({
+    TableName: config.tableName,
+    Item: {
+      PK: worldPk(),
+      SK: `SIGNAL#${signal.createdAt}#${signal.id}`,
+      type: "WORLD_SIGNAL",
+      data: signal,
+      GSI1PK: worldPk(),
+      GSI1SK: `SIGNAL#${signal.createdAt}#${signal.id}`,
+    },
+  }));
 }
 
 export async function getLoreById(id: string): Promise<LoreEntity | null> {

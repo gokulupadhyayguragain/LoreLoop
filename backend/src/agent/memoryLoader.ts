@@ -1,8 +1,8 @@
 import { getConfig } from "../shared/config";
-import { getRecentLore, getWorldState, putWorldState } from "../shared/dynamodb";
-import type { LoreEntity, WorldState } from "../shared/types";
+import { getRecentLore, getRecentSignals, getWorldState, putWorldState } from "../shared/dynamodb";
+import type { LoreEntity, WorldSignal, WorldState } from "../shared/types";
 
-export async function loadWorldMemory(): Promise<{ state: WorldState; recentLore: LoreEntity[] }> {
+export async function loadWorldMemory(): Promise<{ state: WorldState; recentLore: LoreEntity[]; recentSignals: WorldSignal[] }> {
   const config = getConfig();
   let state = await getWorldState();
   if (!state) {
@@ -20,6 +20,5 @@ export async function loadWorldMemory(): Promise<{ state: WorldState; recentLore
     };
     await putWorldState(state);
   }
-  return { state, recentLore: await getRecentLore(config.recentLoreLimit) };
+  return { state, recentLore: await getRecentLore(config.recentLoreLimit), recentSignals: await getRecentSignals() };
 }
-

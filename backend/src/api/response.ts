@@ -5,7 +5,7 @@ const headers = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Allow-Methods": "GET,OPTIONS",
+  "Access-Control-Allow-Methods": "GET,OPTIONS,POST",
 };
 
 export function response<T>(statusCode: number, body: ApiResponse<T>): APIGatewayProxyResult {
@@ -19,4 +19,3 @@ export function ok<T>(data: T): APIGatewayProxyResult {
 export function failure(statusCode: number, message: string): APIGatewayProxyResult {
   return response(statusCode, { data: null, error: { message } });
 }
-

@@ -7,6 +7,7 @@ import { Artwork } from "@/components/Artwork";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { HowItWorks } from "@/components/HowItWorks";
+import { InfluenceForm } from "@/components/InfluenceForm";
 import { LoreGrid } from "@/components/LoreGrid";
 import { SectionHeading } from "@/components/SectionHeading";
 import { WorldMemory } from "@/components/WorldMemory";
@@ -29,6 +30,7 @@ export default function HomePage() {
     <section className="section"><div className="container"><WorldStats stats={stats} /></div></section>
     <section className="section"><div className="container"><SectionHeading eyebrow="The archive" title="The world so far." copy="A growing collection of characters, places, events, and questions — kept in one persistent memory." link={{ href: "/world", label: "Explore all lore" }} />{lore.length ? <LoreGrid lore={lore.slice(0, 6)} /> : error ? <ErrorState message={error} /> : <EmptyState />}</div></section>
     <section className="section"><div className="container"><SectionHeading eyebrow="Persistent memory" title="LoreLoop remembers." copy="The agent does not start from a blank prompt. It carries a compact, evolving record of the world's people, places, factions, and open mysteries." />{memory ? <WorldMemory memory={memory} /> : error ? <ErrorState message={error} /> : <EmptyState />}</div></section>
+    <section className="section"><div className="container"><SectionHeading eyebrow="Participate" title="You are part of the loop." copy="Leave a signal for the next awakening. LoreLoop decides what to keep, what to connect, and what to let fade." /><InfluenceForm /></div></section>
     <section className="section"><div className="container"><SectionHeading eyebrow="The rhythm" title="How the world evolves." copy="A small autonomous loop, repeated until a fictional universe starts to feel like it has a history." /><HowItWorks /></div></section>
   </>;
 }

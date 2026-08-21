@@ -32,12 +32,21 @@ export const canonCheckSchema = z.object({
   severity: z.enum(["NONE", "MINOR", "MAJOR"]),
 });
 
+export const signalSchema = z.object({
+  type: z.enum(["QUESTION", "THREAD", "MOOD"]),
+  text: z.string().trim().min(3).max(280),
+});
+
 export function parseLoreDraft(value: unknown): BedrockLoreDraft {
   return loreDraftSchema.parse(value);
 }
 
 export function parseCanonCheck(value: unknown): CanonCheck {
   return canonCheckSchema.parse(value);
+}
+
+export function parseSignal(value: unknown): { type: "QUESTION" | "THREAD" | "MOOD"; text: string } {
+  return signalSchema.parse(value);
 }
 
 export function safeJsonParse(value: string): unknown {
@@ -51,4 +60,3 @@ export function safeJsonParse(value: string): unknown {
     throw new Error("Bedrock returned malformed JSON.");
   }
 }
-

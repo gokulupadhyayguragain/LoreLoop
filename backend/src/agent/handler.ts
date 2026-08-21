@@ -60,9 +60,9 @@ export const handler: Handler<AgentEvent, AgentResult> = async (event) => {
     const memory = await loadWorldMemory();
     run.previousLoreCount = memory.state.generationCount;
     await putRun(run);
-    await activity(runId, "WORLD_MEMORY_LOADED", `${memory.recentLore.length} recent canon entries loaded.`);
+    await activity(runId, "WORLD_MEMORY_LOADED", `${memory.recentLore.length} recent canon entries and ${memory.recentSignals.length} reader signals loaded.`);
 
-    const firstDraft = await generateLore(memory.state, memory.recentLore);
+    const firstDraft = await generateLore(memory.state, memory.recentLore, undefined, memory.recentSignals);
     run.selectedEntityType = firstDraft.entityType;
     await activity(runId, "WORLD_ANALYZED", "LoreLoop assessed the world's gaps and recent rhythm.", { entityType: firstDraft.entityType });
     await activity(runId, "ENTITY_TYPE_SELECTED", `${firstDraft.entityType} selected for the next evolution.`, { entityType: firstDraft.entityType });
@@ -71,7 +71,7 @@ export const handler: Handler<AgentEvent, AgentResult> = async (event) => {
     let canon = await validateCanon(memory.state, memory.recentLore, draft);
     await activity(runId, "CANON_VALIDATION_COMPLETE", `Canon validation returned ${canon.severity}.`, { status: canon.severity });
     if (canon.severity === "MAJOR") {
-      draft = await generateLore(memory.state, memory.recentLore, canon.conflicts.join("; "));
+      draft = await generateLore(memory.state, memory.recentLore, canon.conflicts.join("; "), memory.recentSignals);
       canon = await validateCanon(memory.state, memory.recentLore, draft);
       await activity(runId, "CANON_RETRY_COMPLETE", `Canon retry returned ${canon.severity}.`, { status: canon.severity });
       if (canon.severity === "MAJOR") throw new Error("The proposed lore could not be reconciled with established canon.");
@@ -143,4 +143,3 @@ export const handler: Handler<AgentEvent, AgentResult> = async (event) => {
     throw error;
   }
 };
-

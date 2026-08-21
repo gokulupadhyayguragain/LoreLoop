@@ -1,4 +1,4 @@
-import type { ActivityEntry, AgentStatus, ApiEnvelope, LoreEntity, WorldState, WorldStats, AgentRun } from "./types";
+import type { ActivityEntry, AgentStatus, ApiEnvelope, LoreEntity, WorldState, WorldStats, AgentRun, WorldSignal, SignalType } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
 
@@ -24,5 +24,21 @@ export const api = {
   memory: () => request<WorldState>("/world/memory"),
   status: () => request<AgentStatus>("/agent/status"),
   activity: () => request<ActivityEntry[]>("/agent/activity"),
+  influence: () => request<WorldSignal[]>("/influence"),
+  sendInfluence: async (type: SignalType, text: string): Promise<ApiEnvelope<WorldSignal>> => {
+    if (!API_BASE_URL) return { data: null, error: { message: "Connect the deployed API before sending a signal." } };
+    try {
+      const response = await fetch(`${API_BASE_URL}/influence`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, text }),
+      });
+      const payload = (await response.json()) as ApiEnvelope<WorldSignal>;
+      if (!response.ok) return { data: null, error: payload.error ?? { message: "Your signal could not reach the archive." } };
+      return payload;
+    } catch {
+      return { data: null, error: { message: "Your signal could not reach the archive." } };
+    }
+  },
   runs: () => request<AgentRun[]>("/agent/activity"),
 };

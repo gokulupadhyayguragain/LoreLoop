@@ -120,6 +120,17 @@ export interface ActivityEntry {
   status?: string;
 }
 
+export type SignalType = "QUESTION" | "THREAD" | "MOOD";
+
+export interface WorldSignal {
+  id: string;
+  worldId: string;
+  type: SignalType;
+  text: string;
+  createdAt: string;
+  status: "OPEN" | "CONSIDERED";
+}
+
 export interface BedrockLoreDraft {
   title: string;
   entityType: EntityType;
@@ -156,4 +167,3 @@ export interface ApiResponse<T> {
   data: T | null;
   error: { message: string } | null;
 }
-

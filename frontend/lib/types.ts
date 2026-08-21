@@ -93,6 +93,17 @@ export interface ActivityEntry {
   status?: string;
 }
 
+export type SignalType = "QUESTION" | "THREAD" | "MOOD";
+
+export interface WorldSignal {
+  id: string;
+  worldId: string;
+  type: SignalType;
+  text: string;
+  createdAt: string;
+  status: "OPEN" | "CONSIDERED";
+}
+
 export interface WorldStats {
   totalLore: number;
   characters: number;
@@ -109,4 +120,3 @@ export interface ApiEnvelope<T> {
   data: T | null;
   error: { message: string } | null;
 }
-

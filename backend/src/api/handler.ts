@@ -1,6 +1,8 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
+import { randomUUID } from "node:crypto";
 import { getConfig } from "../shared/config";
-import { getEntityCounts, getLoreById, getRecentLore, getWorldState, listActivity, listRuns } from "../shared/dynamodb";
+import { getEntityCounts, getLoreById, getRecentLore, getRecentSignals, getWorldState, listActivity, listRuns, putSignal } from "../shared/dynamodb";
+import { parseSignal } from "../shared/validation";
 import { failure, ok } from "./response";
 
 const config = getConfig();
@@ -60,10 +62,24 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       });
     }
     if (path === "/agent/activity" && event.httpMethod === "GET") return ok(await listActivity(60));
+    if (path === "/influence" && event.httpMethod === "GET") return ok(await getRecentSignals(20));
+    if (path === "/influence" && event.httpMethod === "POST") {
+      const rawBody = event.isBase64Encoded ? Buffer.from(event.body ?? "", "base64").toString("utf8") : event.body ?? "{}";
+      const input = parseSignal(JSON.parse(rawBody));
+      const signal = {
+        id: `signal_${randomUUID().replace(/-/g, "").slice(0, 10)}`,
+        worldId: config.worldId,
+        type: input.type,
+        text: input.text,
+        createdAt: new Date().toISOString(),
+        status: "OPEN" as const,
+      };
+      await putSignal(signal);
+      return ok(signal);
+    }
     return failure(404, "Archive route not found.");
   } catch (error) {
     console.error(JSON.stringify({ event: "API_REQUEST_FAILED", path, message: error instanceof Error ? error.message : "unknown" }));
     return failure(503, "The world archive is temporarily unavailable.");
   }
 };
-
