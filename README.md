@@ -15,6 +15,7 @@ There is no primary Generate button. The product is the loop: memory → creativ
 - Public read-only API routes through API Gateway.
 - A responsive Next.js editorial frontend with world archive, timeline, lore detail, memory, activity, and architecture pages.
 - Structured CloudWatch logs and public activity records for challenge evidence.
+- Curator signals that let readers add questions, threads, or moods to the memory considered by the next awakening.
 - SAM infrastructure, tests, local event, and challenge documentation.
 
 ## Architecture
@@ -173,6 +174,8 @@ GET /agent/activity
 ```
 
 There is intentionally no public POST generation endpoint. Generation is scheduler-driven.
+
+Readers can send a signal through `POST /influence`. A signal is stored as world memory and considered during a later scheduled run. It never starts generation immediately, which keeps the autonomous behavior visible while giving people a meaningful role in the system.
 
 ## Current deployment
 

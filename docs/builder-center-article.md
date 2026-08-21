@@ -16,6 +16,8 @@ Amazon Bedrock Nova receives that context and returns a structured lore draft. T
 
 The final lore entry and its relationships are stored in DynamoDB. The world state is updated for the next run. CloudWatch receives structured events, and the public activity page reads those stored run events so the autonomous behavior can be inspected rather than implied by a loading animation.
 
+I also added a Curator layer. A visitor can send a question, a thread, or a mood to the archive. That signal is stored in DynamoDB and passed as optional context to a future awakening. It does not trigger an instant generation, so the user can participate without turning the product back into a prompt box. The visitor becomes part of the world loop while LoreLoop remains responsible for deciding what becomes canon.
+
 **Screenshot placeholder:** CloudWatch logs showing one complete scheduled execution.
 
 ## AWS architecture
