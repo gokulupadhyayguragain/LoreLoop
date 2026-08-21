@@ -32,9 +32,10 @@ The main design challenge was resisting the temptation to treat memory as a long
 
 The other practical lesson was to treat failure as partial. If the text generation succeeds but the image call fails, the world should still move forward. LoreLoop stores the story with a partial status and keeps the archive readable.
 
+For this deployment, the AWS account marked the available Nova Canvas model as legacy. I therefore disabled image generation in the production stack rather than claiming that artwork had been generated. The text agent, memory layer, scheduler, validation, API, and public archive remain active.
+
 ## Links
 
-Live application: TODO
+Live application: https://main.dtzolh2gx99cy.amplifyapp.com/
 
-GitHub repository: TODO
-
+GitHub repository: https://github.com/gokulupadhyayguragain/LoreLoop
