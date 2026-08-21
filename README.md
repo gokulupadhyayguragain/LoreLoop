@@ -174,6 +174,14 @@ GET /agent/activity
 
 There is intentionally no public POST generation endpoint. Generation is scheduler-driven.
 
+## Current deployment
+
+Live site: https://main.dtzolh2gx99cy.amplifyapp.com/
+
+API base: https://wcp41h7f19.execute-api.us-east-1.amazonaws.com/Prod
+
+The production stack is `loreloop` in `us-east-1`. Its enabled scheduler is `LoreLoop-Autonomous-main` with a `rate(3 hours)` expression. The account currently marks `amazon.nova-canvas-v1:0` as a legacy model, so the deployed stack uses `ENABLE_IMAGE_GENERATION=false` and the frontend displays its graceful artwork fallback. Text generation, persistent memory, canon validation, API publication, and scheduled runs are active.
+
 ## Development verification
 
 ```bash
