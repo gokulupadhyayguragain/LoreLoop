@@ -12,7 +12,7 @@ LoreLoop is an autonomous worldbuilding agent that maintains one fictional unive
 
 Each scheduled run starts with a run record. LoreLoop loads a compact world state from DynamoDB — the current era, major locations, characters, factions, recent events, dominant themes, and unresolved mysteries — along with the latest lore entries. A small analysis step gives the model development guidance so it does not keep choosing the same entity type.
 
-Amazon Bedrock Nova receives that context and returns a structured lore draft. The Lambda validates the draft with Zod, repairs malformed JSON once when necessary, and sends the proposed entry through a second lightweight canon check. A major conflict triggers one correction attempt; the workflow never loops indefinitely. If artwork generation is enabled, Nova Canvas creates a matching visual and the Lambda stores it in a private S3 bucket.
+Amazon Bedrock Nova receives that context and returns a structured lore draft. The Lambda validates the draft with Zod, repairs malformed JSON once when necessary, and sends the proposed entry through a second lightweight canon check. A major conflict triggers one correction attempt; the workflow never loops indefinitely. Stable Image Core creates a matching visual and the Lambda stores it in a private S3 bucket.
 
 The final lore entry and its relationships are stored in DynamoDB. The world state is updated for the next run. CloudWatch receives structured events, and the public activity page reads those stored run events so the autonomous behavior can be inspected rather than implied by a loading animation.
 
@@ -34,7 +34,7 @@ The main design challenge was resisting the temptation to treat memory as a long
 
 The other practical lesson was to treat failure as partial. If the text generation succeeds but the image call fails, the world should still move forward. LoreLoop stores the story with a partial status and keeps the archive readable.
 
-For this deployment, the AWS account marked the available Nova Canvas model as legacy. I therefore disabled image generation in the production stack rather than claiming that artwork had been generated. The text agent, memory layer, scheduler, validation, API, and public archive remain active.
+The production deployment uses the active Stable Image Core model in us-west-2. Artwork is generated once for each lore entry, stored privately in S3, and exposed to the public archive through temporary signed links from the API. The text agent, memory layer, scheduler, validation, API, image layer, and public archive are all active.
 
 ## Links
 

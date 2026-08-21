@@ -4,6 +4,7 @@ import { safeJsonParse } from "./validation";
 
 const config = getConfig();
 const client = new BedrockRuntimeClient({ region: config.region });
+const imageClient = new BedrockRuntimeClient({ region: config.imageRegion });
 
 interface NovaResponse {
   output?: { message?: { content?: Array<{ text?: string }> } };
@@ -34,20 +35,24 @@ export async function invokeJson(prompt: string, maxTokens = 1400): Promise<unkn
 
 export async function invokeImage(prompt: string): Promise<Buffer> {
   if (!config.imageModelId) throw new Error("NOVA_IMAGE_MODEL_ID is required for artwork generation.");
+  const isStabilityImage = config.imageModelId.startsWith("stability.");
   const command = new InvokeModelCommand({
     modelId: config.imageModelId,
     contentType: "application/json",
     accept: "application/json",
-    body: JSON.stringify({
+    body: JSON.stringify(isStabilityImage ? {
+      prompt,
+      aspect_ratio: "1:1",
+      output_format: "png",
+    } : {
       taskType: "TEXT_IMAGE",
       textToImageParams: { text: prompt },
       imageGenerationConfig: { numberOfImages: 1, height: 1024, width: 1024, cfgScale: 7 },
     }),
   });
-  const response = await client.send(command);
+  const response = await imageClient.send(command);
   const parsed = JSON.parse(new TextDecoder().decode(response.body)) as NovaResponse;
   const image = parsed.images?.[0];
-  if (!image) throw new Error("Nova Canvas returned no image data.");
+  if (!image) throw new Error(`${config.imageModelId} returned no image data.`);
   return Buffer.from(image, "base64");
 }
-

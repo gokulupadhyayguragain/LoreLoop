@@ -8,7 +8,7 @@
 4. A small local world analyzer selects development guidance based on generation count, recent entity types, and open mysteries.
 5. Amazon Bedrock Nova returns strict JSON. Zod validates it; a single repair pass is allowed.
 6. A second Bedrock call performs lightweight canon validation. A major conflict gets one correction-generation retry.
-7. Nova Canvas artwork is attempted twice when enabled. Artwork failure marks the lore `PARTIAL` without losing successful text.
+7. Stable Image Core artwork is attempted twice when enabled. Artwork failure marks the lore `PARTIAL` without losing successful text.
 8. Lore is published to DynamoDB, the world state is updated, and the run is completed.
 9. Structured logs and public activity entries leave evidence of each step.
 
@@ -29,4 +29,3 @@ The S3 bucket is private. Artwork keys use `lore/YYYY/MM/DD/{loreId}.png`. A con
 ## IAM boundary
 
 The agent can read and write its DynamoDB table, write objects to its artwork bucket, invoke Bedrock models, and emit CloudWatch logs. The API function only reads DynamoDB. The frontend has no AWS credentials.
-

@@ -18,7 +18,11 @@ Parameters:
     Default: amazon.nova-lite-v1:0
   NovaImageModelId:
     Type: String
-    Default: amazon.nova-canvas-v1:0
+    Default: stability.stable-image-core-v1:1
+  ImageModelRegion:
+    Type: String
+    Default: us-west-2
+    Description: Region where the selected image model is available.
   EnableImageGeneration:
     Type: String
     Default: 'true'
@@ -38,6 +42,7 @@ Globals:
         ARTWORK_BUCKET_NAME: !Ref LoreLoopArtworkBucket
         NOVA_TEXT_MODEL_ID: !Ref NovaTextModelId
         NOVA_IMAGE_MODEL_ID: !Ref NovaImageModelId
+        IMAGE_MODEL_REGION: !Ref ImageModelRegion
         GENERATION_SCHEDULE: !Ref GenerationSchedule
         RECENT_LORE_LIMIT: '20'
         ENABLE_IMAGE_GENERATION: !Ref EnableImageGeneration
@@ -128,6 +133,8 @@ Resources:
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref LoreLoopWorldTable
+        - S3ReadPolicy:
+            BucketName: !Ref LoreLoopArtworkBucket
         - Statement:
             - Effect: Allow
               Action:

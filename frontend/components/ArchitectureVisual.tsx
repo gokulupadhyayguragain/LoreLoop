@@ -6,7 +6,7 @@ const nodes: Array<{ icon: LucideIcon; title: string; copy: string }> = [
   { icon: Waypoints, title: "LoreLoop Lambda", copy: "Orchestrates memory, creative generation, validation, and publication." },
   { icon: Database, title: "DynamoDB", copy: "Holds world state, canon entities, run records, and public activity." },
   { icon: BrainCircuit, title: "Amazon Bedrock", copy: "Nova chooses the next meaningful creation and checks canon." },
-  { icon: Image, title: "Nova Canvas", copy: "Creates artwork when image generation is enabled." },
+  { icon: Image, title: "Stable Image Core", copy: "Creates artwork when image generation is enabled." },
   { icon: Cloud, title: "Private S3", copy: "Stores artwork behind a non-public bucket boundary." },
   { icon: Radio, title: "CloudWatch", copy: "Records structured evidence from every autonomous awakening." },
   { icon: Laptop, title: "Next.js archive", copy: "Presents the living world through read-only API routes." },

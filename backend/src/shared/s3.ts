@@ -1,4 +1,5 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getConfig } from "./config";
 
 const config = getConfig();
@@ -24,3 +25,7 @@ export async function storeArtwork(id: string, generatedAt: string, image: Buffe
   return { key, url };
 }
 
+export async function getArtworkUrl(key: string): Promise<string> {
+  if (!config.artworkBucketName) throw new Error("ARTWORK_BUCKET_NAME is required for artwork delivery.");
+  return getSignedUrl(client, new GetObjectCommand({ Bucket: config.artworkBucketName, Key: key }), { expiresIn: 3600 });
+}

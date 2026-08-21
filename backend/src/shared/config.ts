@@ -1,5 +1,6 @@
 export interface AppConfig {
   region: string;
+  imageRegion: string;
   worldId: string;
   worldName: string;
   tableName: string;
@@ -15,6 +16,7 @@ export interface AppConfig {
 export function getConfig(): AppConfig {
   return {
     region: process.env.AWS_REGION ?? "us-east-1",
+    imageRegion: process.env.IMAGE_MODEL_REGION ?? "us-west-2",
     worldId: process.env.WORLD_ID ?? "main",
     worldName: process.env.WORLD_NAME ?? "Aethra",
     tableName: process.env.LORE_TABLE_NAME ?? "LoreLoopWorld",
@@ -34,4 +36,3 @@ export function requireTextModel(config: AppConfig): string {
   }
   return config.textModelId;
 }
-

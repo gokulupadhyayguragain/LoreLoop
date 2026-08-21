@@ -2,10 +2,26 @@ import type { APIGatewayProxyHandler } from "aws-lambda";
 import { randomUUID } from "node:crypto";
 import { getConfig } from "../shared/config";
 import { getEntityCounts, getLoreById, getRecentLore, getRecentSignals, getWorldState, listActivity, listRuns, putSignal } from "../shared/dynamodb";
+import { getArtworkUrl } from "../shared/s3";
+import type { LoreEntity } from "../shared/types";
 import { parseSignal } from "../shared/validation";
 import { failure, ok } from "./response";
 
 const config = getConfig();
+
+async function withArtworkUrl(lore: LoreEntity): Promise<LoreEntity> {
+  if (!lore.imageKey || lore.imageUrl) return lore;
+  try {
+    return { ...lore, imageUrl: await getArtworkUrl(lore.imageKey) };
+  } catch (error) {
+    console.error(JSON.stringify({ event: "ARTWORK_URL_FAILED", loreId: lore.id, message: error instanceof Error ? error.message : "unknown" }));
+    return lore;
+  }
+}
+
+async function withArtworkUrls(lore: LoreEntity[]): Promise<LoreEntity[]> {
+  return Promise.all(lore.map(withArtworkUrl));
+}
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   if (event.httpMethod === "OPTIONS") return ok({});
@@ -13,15 +29,15 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     if (path === "/lore" && event.httpMethod === "GET") {
       const limit = Number(event.queryStringParameters?.limit ?? "20");
-      return ok(await getRecentLore(Number.isFinite(limit) ? limit : 20));
+      return ok(await withArtworkUrls(await getRecentLore(Number.isFinite(limit) ? limit : 20)));
     }
     if (path.startsWith("/lore/") && event.httpMethod === "GET") {
       const id = event.pathParameters?.id ?? path.split("/").pop();
       if (!id) return failure(400, "Lore id is required.");
       const lore = await getLoreById(id);
-      return lore ? ok(lore) : failure(404, "Lore entry not found.");
+      return lore ? ok(await withArtworkUrl(lore)) : failure(404, "Lore entry not found.");
     }
-    if (path === "/timeline" && event.httpMethod === "GET") return ok(await getRecentLore(100));
+    if (path === "/timeline" && event.httpMethod === "GET") return ok(await withArtworkUrls(await getRecentLore(100)));
     if (path === "/world/memory" && event.httpMethod === "GET") {
       const state = await getWorldState();
       return ok(state ?? {

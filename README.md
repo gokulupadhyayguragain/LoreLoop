@@ -2,7 +2,7 @@
 
 ## A fictional world that keeps writing itself.
 
-LoreLoop is an autonomous worldbuilding agent for the AWS Builder Center Weekend Creative Agent Challenge. It maintains one persistent fictional universe, wakes on an EventBridge schedule, reads its existing canon, decides what should develop next, writes a new lore entry with Amazon Bedrock Nova, validates the result against the world memory, optionally generates artwork with Nova Canvas, and publishes the result to a read-only archive.
+LoreLoop is an autonomous worldbuilding agent for the AWS Builder Center Weekend Creative Agent Challenge. It maintains one persistent fictional universe, wakes on an EventBridge schedule, reads its existing canon, decides what should develop next, writes a new lore entry with Amazon Bedrock Nova, validates the result against the world memory, generates artwork with Stable Image Core, and publishes the result to a read-only archive.
 
 There is no primary Generate button. The product is the loop: memory → creative decision → canon check → publication → memory.
 
@@ -11,7 +11,7 @@ There is no primary Generate button. The product is the loop: memory → creativ
 - Scheduled autonomous generation through Amazon EventBridge Scheduler and AWS Lambda.
 - Compact world state plus canon entities in a DynamoDB single-table design.
 - Structured Bedrock JSON generation, repair, and lightweight canon validation.
-- Optional Nova Canvas artwork stored in a private, encrypted S3 bucket.
+- Stable Image Core artwork stored in a private, encrypted S3 bucket.
 - Public read-only API routes through API Gateway.
 - A responsive Next.js editorial frontend with world archive, timeline, lore detail, memory, activity, and architecture pages.
 - Structured CloudWatch logs and public activity records for challenge evidence.
@@ -27,7 +27,7 @@ flowchart TD
   C --> B
   B --> D[Amazon Bedrock Nova]
   D --> E[Canon Validation]
-  E --> F[Nova Canvas]
+  E --> F[Stable Image Core]
   F --> G[Private Amazon S3]
   B --> H[DynamoDB New Lore]
   B --> I[CloudWatch Logs]
@@ -61,7 +61,7 @@ The backend uses AWS SAM only. It does not mix SAM with CDK or Terraform.
 - AWS CLI and AWS SAM CLI configured with an AWS profile.
 - An AWS account with Amazon Bedrock model access enabled in the deployment region.
 - Access to an Amazon Nova text model. The default is `amazon.nova-lite-v1:0` and can be changed at deploy time.
-- Access to Amazon Nova Canvas if artwork generation is enabled.
+- Access to Stable Image Core in us-west-2 if artwork generation is enabled.
 
 The Lambda uses its execution role. Do not put AWS access keys in `.env` files or the frontend.
 
@@ -101,7 +101,8 @@ Recommended guided values:
 - `GenerationSchedule`: `rate(15 minutes)` while gathering evidence, then `rate(3 hours)` for the production challenge deployment
 - `EnableImageGeneration`: `true` for the final demo; `false` for cheaper text-only development
 - `NovaTextModelId`: a model ID enabled in the account
-- `NovaImageModelId`: a Nova Canvas model ID enabled in the account
+- `NovaImageModelId`: `stability.stable-image-core-v1:1`
+- `ImageModelRegion`: `us-west-2`
 
 The stack outputs the API base URL, DynamoDB table, S3 bucket, Lambda function, and scheduler name. Copy the API URL for the frontend.
 
@@ -150,7 +151,8 @@ WORLD_NAME=Aethra
 LORE_TABLE_NAME=LoreLoopWorld
 ARTWORK_BUCKET_NAME=...
 NOVA_TEXT_MODEL_ID=amazon.nova-lite-v1:0
-NOVA_IMAGE_MODEL_ID=amazon.nova-canvas-v1:0
+NOVA_IMAGE_MODEL_ID=stability.stable-image-core-v1:1
+IMAGE_MODEL_REGION=us-west-2
 GENERATION_SCHEDULE=rate(3 hours)
 RECENT_LORE_LIMIT=20
 ENABLE_IMAGE_GENERATION=true
@@ -183,7 +185,7 @@ Live site: https://main.dtzolh2gx99cy.amplifyapp.com/
 
 API base: https://wcp41h7f19.execute-api.us-east-1.amazonaws.com/Prod
 
-The production stack is `loreloop` in `us-east-1`. Its enabled scheduler is `LoreLoop-Autonomous-main` with a `rate(3 hours)` expression. The account currently marks `amazon.nova-canvas-v1:0` as a legacy model, so the deployed stack uses `ENABLE_IMAGE_GENERATION=false` and the frontend displays its graceful artwork fallback. Text generation, persistent memory, canon validation, API publication, and scheduled runs are active.
+The production stack is `loreloop` in `us-east-1`. Its enabled scheduler is `LoreLoop-Autonomous-main` with a `rate(3 hours)` expression. Artwork uses the active Stable Image Core model in `us-west-2`, is stored privately in S3, and is delivered through temporary signed links from the API. Text generation, persistent memory, canon validation, API publication, image generation, and scheduled runs are active.
 
 ## Development verification
 
@@ -204,7 +206,8 @@ For the challenge proof, deploy with `rate(15 minutes)`, leave the application a
 
 - DynamoDB uses on-demand billing.
 - Image generation can be disabled during development.
-- Lambda is sized for the Bedrock + Canvas workflow with a bounded 180-second timeout.
+- Stable Image Core is billed per generated image, so one image is created per lore entry.
+- Lambda is sized for the Bedrock image workflow with a bounded 180-second timeout.
 - Text generation, JSON repair, canon retry, and artwork retry loops are capped.
 - IAM grants the agent only DynamoDB, S3 write, Bedrock invoke, and logging permissions.
 - Generated content is instructed to remain suitable for a public demonstration.
