@@ -2,7 +2,9 @@ export function formatDate(value?: string | null, options: Intl.DateTimeFormatOp
   if (!value) return "Waiting for first awakening";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown time";
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", ...options }).format(date);
+  const hasDateStyle = options.dateStyle !== undefined || options.timeStyle !== undefined;
+  const dateOptions: Intl.DateTimeFormatOptions = hasDateStyle ? options : { month: "short", day: "numeric", year: "numeric", ...options };
+  return new Intl.DateTimeFormat("en", dateOptions).format(date);
 }
 
 export function formatRelative(value?: string | null): string {
@@ -24,4 +26,3 @@ export function formatEntityType(value: string): string {
 export function scheduleLabel(value: string): string {
   return value.replace(/^rate\(/, "Every ").replace(/\)$/, "").replace(/ hours?/, " hours").replace(/ minutes?/, " minutes");
 }
-
